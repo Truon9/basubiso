@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#fff8ee">
+    <title>MayStudy — AI study companion</title>
+    <link rel="stylesheet" href="src/styles.css">
+  </head>
+  <body>
+    <section id="login-screen" class="login-shell">
+      <div class="login-story">
+        <span class="login-brand">MayStudy</span>
+        <div class="story-content">
+          <p class="eyebrow" data-i18n="storyEyebrow">YOUR STUDY COMPANION</p>
+          <h1>
+            <span data-i18n="storyLine1">Every document,</span><br>
+            <em data-i18n="storyEmphasis">understood</em>
+            <span data-i18n="storyLine2">in one place.</span>
+          </h1>
+          <p data-i18n="storyDescription">
+            Turn your course PDFs into focused flashcards, concise notes, and practice questions.
+          </p>
+          <div class="chips">
+            <span data-i18n="pdfIntelligence">PDF intelligence</span>
+            <span data-i18n="flashcards">Flashcards</span>
+            <span data-i18n="practice">Practice</span>
+          </div>
+          <div class="stats">
+            <b>AI</b>
+            <span data-i18n="studyMaterials">Study materials from your documents</span>
+            <b>∞</b>
+            <span data-i18n="alwaysAvailable">Learning sets always available</span>
+          </div>
+        </div>
+        <small data-i18n="quote">“Small steps, repeated often, turn knowledge into confidence.”</small>
+      </div>
+
+      <div class="login-panel">
+        <form id="login-form">
+          <div class="language-row">
+            <button type="button" id="login-language" aria-label="Switch English and Vietnamese">EN / VI</button>
+          </div>
+          <h2 data-i18n="signIn">Sign in</h2>
+          <p data-i18n="welcome">Welcome back to MayStudy, your learning workspace.</p>
+          <label data-i18n="username">
+            Username
+            <input id="login-username" value="admin" autocomplete="username" required>
+          </label>
+          <label data-i18n="password">
+            Password
+            <input id="login-password" type="password" autocomplete="current-password" required>
+          </label>
+          <p id="login-error" role="alert" aria-live="polite"></p>
+          <button class="primary" data-i18n="signIn">Sign in</button>
+        </form>
+      </div>
+    </section>
+
+    <div id="app-shell" hidden>
+      <aside>
+        <a class="brand" href="#" aria-label="MayStudy — home"><span>MayStudy</span></a>
+        <button type="button" id="home" data-i18n="subjects">Subjects</button>
+        <button type="button" id="new-course" data-i18n="createSubject">+ Create subject</button>
+        <div id="course-nav"></div>
+        <div class="preferences">
+          <button type="button" id="language" aria-label="Switch English and Vietnamese">EN</button>
+          <button type="button" id="theme" data-theme-toggle aria-label="Use dark theme">☾</button>
+          <button type="button" id="logout" aria-label="Sign out" title="Sign out">↗</button>
+        </div>
+      </aside>
+
+      <main>
+        <header>
+          <div>
+            <p id="crumb" data-i18n="workspace">Learning workspace</p>
+            <h1 id="title" data-i18n="mySubjects">Your subjects</h1>
+          </div>
+        </header>
+
+        <section id="empty" class="hero">
+          <p class="eyebrow">MAYSTUDY</p>
+          <h2 data-i18n="startTitle">Start with a subject</h2>
+          <p data-i18n="startText">
+            Create a subject, then add a PDF to turn it into flashcards and practice questions.
+          </p>
+          <button type="button" class="primary" id="empty-new" data-i18n="createSubject">+ Create subject</button>
+        </section>
+
+        <section id="courses" class="course-grid" hidden></section>
+
+        <section id="course-detail" hidden>
+          <div class="toolbar">
+            <div>
+              <h2 id="course-name"></h2>
+              <p data-i18n="addDocumentHint">Add a document to create an AI study set.</p>
+            </div>
+            <label class="primary" for="file" data-i18n="addPdf" tabindex="0">+ Add PDF</label>
+            <input id="file" type="file" accept="application/pdf" hidden>
+          </div>
+          <div id="documents" class="documents"></div>
+        </section>
+      </main>
+
+      <dialog id="course-dialog">
+        <form method="dialog" id="course-form">
+          <button class="close" aria-label="Close">×</button>
+          <p class="eyebrow" data-i18n="newSubject">NEW SUBJECT</p>
+          <h2 data-i18n="nameSubject">Name your subject</h2>
+          <input id="course-input" required maxlength="120">
+          <button class="primary" data-i18n="create">Create subject</button>
+        </form>
+      </dialog>
+
+      <dialog id="delete-document-dialog" aria-labelledby="delete-document-title">
+        <h2 id="delete-document-title" data-i18n="deleteDocument">Delete document?</h2>
+        <p class="delete-description" data-i18n="deleteDocumentWarning">
+          This document and its generated flashcards and quiz will be permanently deleted.
+        </p>
+        <p class="delete-filename" id="delete-document-name"></p>
+        <div class="dialog-actions">
+          <button type="button" class="secondary-button" id="cancel-delete" data-i18n="cancel">Cancel</button>
+          <button type="button" class="danger-button" id="confirm-delete" data-i18n="deleteDocumentAction">Delete document</button>
+        </div>
+      </dialog>
+
+      <dialog id="study-dialog">
+        <button type="button" class="close" id="close-study" aria-label="Close">×</button>
+        <p class="eyebrow" id="study-source"></p>
+        <div class="tabs">
+          <button type="button" data-tab="cards" class="active" data-i18n="flashcards">Flashcards</button>
+          <button type="button" data-tab="quiz" data-i18n="quiz">Quiz</button>
+        </div>
+        <div id="cards-panel">
+          <p id="card-count"></p>
+          <button type="button" id="card" class="card">
+            <span id="front"></span>
+            <span id="back"></span>
+          </button>
+          <div class="arrows">
+            <button type="button" id="prev" aria-label="Previous flashcard">←</button>
+            <button type="button" id="next" aria-label="Next flashcard">→</button>
+          </div>
+        </div>
+        <div id="quiz-panel" hidden>
+          <h2 id="question"></h2>
+          <div id="answers"></div>
+          <p id="feedback"></p>
+        </div>
+      </dialog>
+    </div>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="src/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,135 @@
+.preferences {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: auto;
+  padding: 13px 4px 0;
+  border-top: 1px solid var(--line);
+}
+
+.preferences button {
+  display: grid;
+  place-items: center;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 750;
+  text-align: center;
+  transition: border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.preferences button:hover {
+  border-color: color-mix(in srgb, var(--brand) 36%, var(--line));
+  color: var(--brand-strong);
+  transform: translateY(-1px);
+}
+
+.preferences #theme {
+  font-size: 17px;
+}
+
+.preferences #logout {
+  margin-left: auto;
+  font-size: 16px;
+}
+
+.card {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 520ms cubic-bezier(.2, .72, .2, 1), box-shadow 220ms ease;
+}
+
+.card:hover {
+  box-shadow: 0 24px 52px color-mix(in srgb, var(--brand) 19%, transparent) !important;
+}
+
+.card.flipped {
+  transform: rotateY(180deg);
+}
+
+.card #front,
+.card #back {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 34px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.card #back {
+  display: grid;
+  transform: rotateY(180deg);
+}
+
+.card.flipped #front,
+.card.flipped #back {
+  display: grid;
+}
+
+.course,
+.document,
+.hero {
+  animation: content-enter 360ms cubic-bezier(.2, .75, .25, 1) both;
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+}
+
+.course:nth-child(2) {
+  animation-delay: 50ms;
+}
+
+.course:nth-child(3) {
+  animation-delay: 100ms;
+}
+
+.course:hover,
+.document:hover {
+  box-shadow: 0 17px 38px color-mix(in srgb, var(--brand) 11%, transparent);
+  transform: translateY(-3px);
+}
+
+dialog[open] {
+  animation: dialog-enter 220ms ease-out both;
+}
+
+@keyframes content-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dialog-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 760px) {
+  .preferences {
+    width: auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .preferences #logout {
+    margin-left: 0;
+  }
+}
