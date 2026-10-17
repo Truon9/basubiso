@@ -126,7 +126,11 @@
 
       <dialog id="study-dialog">
         <button type="button" class="close" id="close-study" aria-label="Close">×</button>
-        <p class="eyebrow" id="study-source"></p>
+        <div class="study-heading">
+          <p class="eyebrow" id="study-source"></p>
+          <button type="button" id="refresh-study" class="refresh-study" aria-label="Generate a new study set" title="Generate a new study set">↻</button>
+        </div>
+        <p id="refresh-unavailable" class="refresh-unavailable" hidden></p>
         <div class="tabs">
           <button type="button" data-tab="cards" class="active" data-i18n="flashcards">Flashcards</button>
           <button type="button" data-tab="quiz" data-i18n="quiz">Quiz</button>
@@ -143,14 +147,19 @@
           </div>
         </div>
         <div id="quiz-panel" hidden>
+          <p id="quiz-count" class="quiz-count"></p>
           <h2 id="question"></h2>
           <div id="answers"></div>
-          <p id="feedback"></p>
+          <p id="feedback" aria-live="polite"></p>
+          <div class="quiz-navigation">
+            <button type="button" id="quiz-prev" class="secondary-button" aria-label="Previous question">←</button>
+            <button type="button" id="quiz-next" class="secondary-button" aria-label="Next question">→</button>
+          </div>
         </div>
       </dialog>
     </div>
 
     <div id="toast" role="status" aria-live="polite"></div>
-    <script type="module" src="src/app.js"></script>
+    <script type="module" src="src/app.js?v=quiz-navigation-2"></script>
   </body>
 </html>

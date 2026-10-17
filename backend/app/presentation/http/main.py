@@ -8,10 +8,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from mistralai.models.sdkerror import SDKError
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from app.application.errors import RateLimitExhaustedError
 from app.application.generate_study_set import GenerateStudySet
+from app.application.material_generation import InsufficientMaterialError, generate_unique_material
+from app.domain.models import SourcePage, StudyDocument
 from app.infrastructure.ai.failover_generator import FailoverGenerator
 from app.infrastructure.ai.gemini_generator import GeminiGenerator
 from app.infrastructure.ai.mistral_generator import MistralGenerator
@@ -35,6 +37,11 @@ settings = Settings()
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     Base.metadata.create_all(bind=engine)
+    # Additive upgrade for databases created before regeneration existed.
+    with engine.begin() as connection:
+        connection.execute(text("ALTER TABLE documents ADD COLUMN IF NOT EXISTS source_pages JSONB NOT NULL DEFAULT '[]'::jsonb"))
+        connection.execute(text("ALTER TABLE documents ADD COLUMN IF NOT EXISTS flashcard_history JSONB NOT NULL DEFAULT '[]'::jsonb"))
+        connection.execute(text("ALTER TABLE documents ADD COLUMN IF NOT EXISTS question_history JSONB NOT NULL DEFAULT '[]'::jsonb"))
     if settings.admin_password:
         with SessionLocal() as session:
             if not session.scalar(select(User).where(User.username == settings.admin_username)):
@@ -63,7 +70,7 @@ def verify_password(password: str, encoded: str) -> bool:
     return hmac.compare_digest(actual, expected)
 
 def document_payload(document: StoredDocument) -> dict:
-    return {"id": document.id, "filename": document.filename, "summary": document.summary, "flashcards": document.flashcards, "questions": document.questions, "created_at": document.created_at}
+    return {"id": document.id, "filename": document.filename, "summary": document.summary, "flashcards": document.flashcards, "questions": document.questions, "can_refresh": bool(document.source_pages), "created_at": document.created_at}
 
 def generator() -> FailoverGenerator:
     providers = []
@@ -136,11 +143,57 @@ async def generate_document(course_id: int, file: UploadFile = File(...)) -> dic
             material = await GenerateStudySet(PyMuPdfExtractor(), generator()).execute(file.filename or "document.pdf", content)
         except ValueError as error:
             raise HTTPException(422, str(error)) from error
+        except InsufficientMaterialError as error:
+            raise HTTPException(422, str(error)) from error
         except RateLimitExhaustedError as error:
             raise HTTPException(429, str(error)) from error
         except SDKError as error:
             raise HTTPException(502, "AI provider could not generate study material.") from error
-        document = StoredDocument(course_id=course.id, filename=file.filename or "document.pdf", summary=material.get("summary", ""), flashcards=material.get("flashcards", []), questions=material.get("questions", []))
+        document = StoredDocument(
+            course_id=course.id,
+            filename=file.filename or "document.pdf",
+            summary=material["summary"],
+            flashcards=material["flashcards"],
+            questions=material["questions"],
+            source_pages=material["source_pages"],
+            flashcard_history=[card["front"] for card in material["flashcards"]],
+            question_history=[question["question"] for question in material["questions"]],
+        )
         session.add(document)
+        session.commit()
+        return document_payload(document)
+
+
+@app.post("/v1/courses/{course_id}/documents/{document_id}:refresh")
+async def refresh_document(course_id: int, document_id: int) -> dict:
+    with SessionLocal() as session:
+        document = session.scalar(
+            select(StoredDocument)
+            .where(StoredDocument.id == document_id, StoredDocument.course_id == course_id)
+            .with_for_update()
+        )
+        if document is None:
+            raise HTTPException(404, "Document not found in this subject.")
+        if not document.source_pages:
+            raise HTTPException(409, "This document was uploaded before source text was saved. Upload the PDF again to enable refresh.")
+        source = StudyDocument(
+            filename=document.filename,
+            pages=[SourcePage(number=page["number"], text=page["text"]) for page in document.source_pages],
+        )
+        old_cards = list(document.flashcard_history or []) or [card["front"] for card in document.flashcards]
+        old_questions = list(document.question_history or []) or [question["question"] for question in document.questions]
+        try:
+            material = await generate_unique_material(source, generator(), old_cards, old_questions)
+        except InsufficientMaterialError as error:
+            raise HTTPException(409, str(error)) from error
+        except RateLimitExhaustedError as error:
+            raise HTTPException(429, str(error)) from error
+        except SDKError as error:
+            raise HTTPException(502, "AI provider could not generate study material.") from error
+        document.summary = material["summary"]
+        document.flashcards = material["flashcards"]
+        document.questions = material["questions"]
+        document.flashcard_history = old_cards + [card["front"] for card in material["flashcards"]]
+        document.question_history = old_questions + [question["question"] for question in material["questions"]]
         session.commit()
         return document_payload(document)

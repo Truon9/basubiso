@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, create_engine
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, create_engine, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, sessionmaker
 
@@ -40,5 +40,8 @@ class StoredDocument(Base):
     summary: Mapped[str] = mapped_column(Text)
     flashcards: Mapped[list] = mapped_column(JSONB)
     questions: Mapped[list] = mapped_column(JSONB)
+    source_pages: Mapped[list] = mapped_column(JSONB, nullable=False, server_default=text("'[]'::jsonb"))
+    flashcard_history: Mapped[list] = mapped_column(JSONB, nullable=False, server_default=text("'[]'::jsonb"))
+    question_history: Mapped[list] = mapped_column(JSONB, nullable=False, server_default=text("'[]'::jsonb"))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     course: Mapped[Course] = relationship(back_populates="documents")

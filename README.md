@@ -131,7 +131,7 @@ python3 -m http.server 5173 --bind 0.0.0.0 --directory frontend
 
 Mở trình duyệt Windows tại **http://localhost:5173**. API ở **http://localhost:8000**, tài liệu API ở **http://localhost:8000/docs**. Đăng nhập bằng `ADMIN_USERNAME` và `ADMIN_PASSWORD` bạn đã đặt. Frontend là file tĩnh, **không chạy từ `file://`** và không cần `npm install`/`npm run dev`.
 
-Luồng thử nhanh: đăng nhập → tạo môn học → vào môn học → thêm PDF có text (tối đa 15 MB) → đợi AI xử lý → học flashcard/quiz. Bấm **Xoá** ở tài liệu nếu muốn bỏ bộ học đó; thao tác có hộp xác nhận.
+Luồng thử nhanh: đăng nhập → tạo môn học → vào môn học → thêm PDF có text (tối đa 15 MB) → đợi AI xử lý → học 10 flashcard và 20 câu quiz. Trong màn hình học, dùng mũi tên để chuyển câu; nút tròn **↻** gọi API tạo bộ 20 câu + 10 flashcard mới từ cùng tài liệu. Bấm **Xoá** ở tài liệu nếu muốn bỏ bộ học đó; thao tác có hộp xác nhận.
 
 ### Những lần chạy sau và cách dừng
 
@@ -181,6 +181,6 @@ Xem thêm [kiến trúc](ARCHITECTURE.md) và [kế hoạch triển khai](docs/I
 
 ## Giới hạn hiện tại
 
-Đây là môi trường phát triển local, **chưa nên public nguyên trạng**. Đăng nhập kiểm tra mật khẩu nhưng API môn học/tài liệu chưa có token/session và chưa tách dữ liệu theo user; PostgreSQL trong Compose còn mở port `5432` với credential mẫu. PDF gốc không được lưu, chỉ lưu nội dung AI tạo ra; xoá tài liệu là xoá bản ghi và bộ học trong DB. PDF scan chưa có OCR; quiz hiện mới hiển thị câu đầu tiên. Chi tiết ưu tiên sửa nằm trong [implementation plan](docs/IMPLEMENTATION_PLAN.md).
+Đây là môi trường phát triển local, **chưa nên public nguyên trạng**. Đăng nhập kiểm tra mật khẩu nhưng API môn học/tài liệu chưa có token/session và chưa tách dữ liệu theo user; PostgreSQL trong Compose còn mở port `5432` với credential mẫu. PDF gốc không được lưu; tài liệu upload từ phiên bản này lưu text theo trang để tạo lại bộ học. Tài liệu cũ chưa có text nguồn phải upload lại để dùng ↻. Backend loại câu trùng/sát chữ với lịch sử trước khi lưu, nhưng chưa thể bảo đảm phát hiện mọi câu diễn đạt khác mà hỏi cùng một ý; nếu AI không sinh đủ bộ mới sau ba lượt, API báo lỗi và giữ nguyên bộ cũ. PDF scan chưa có OCR. Chi tiết ưu tiên sửa nằm trong [implementation plan](docs/IMPLEMENTATION_PLAN.md).
 
 Tài liệu cài đặt tham khảo: [Microsoft WSL](https://learn.microsoft.com/en-us/windows/wsl/install), [Ubuntu 24.04 trên WSL](https://ubuntu.com/wsl/docs/stable/tutorials/develop-with-ubuntu-wsl/), [WSL systemd](https://learn.microsoft.com/en-us/windows/wsl/systemd/), [lưu source giữa Windows/WSL](https://learn.microsoft.com/en-us/windows/wsl/filesystems), [Ubuntu `docker-compose-v2`](https://packages.ubuntu.com/noble/docker-compose-v2), [Docker về quyền của nhóm `docker`](https://docs.docker.com/engine/install/linux-postinstall/).

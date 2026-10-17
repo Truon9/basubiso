@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from app.domain.models import StudyDocument
+from app.domain.models import GenerationRequest, StudyDocument
 
 
 class PdfTextExtractor(Protocol):
@@ -8,4 +8,4 @@ class PdfTextExtractor(Protocol):
 
 
 class StudyMaterialGenerator(Protocol):
-    async def generate(self, document: StudyDocument) -> dict: ...
+    async def generate(self, request: GenerationRequest) -> dict: ...
