@@ -41,18 +41,27 @@
           <div class="language-row">
             <button type="button" id="login-language" aria-label="Switch English and Vietnamese">EN / VI</button>
           </div>
-          <h2 data-i18n="signIn">Sign in</h2>
-          <p data-i18n="welcome">Welcome back to MayStudy, your learning workspace.</p>
+          <div class="auth-tabs" role="group" aria-label="Account access">
+            <button type="button" id="auth-signin-tab" class="active" aria-pressed="true">Sign in</button>
+            <button type="button" id="auth-register-tab" aria-pressed="false">Create account</button>
+          </div>
+          <h2 id="auth-title">Sign in</h2>
+          <p id="auth-intro">Welcome back to MayStudy, your learning workspace.</p>
           <label data-i18n="username">
             Username
-            <input id="login-username" value="admin" autocomplete="username" required>
+            <input id="login-username" autocomplete="username" minlength="3" maxlength="80" required>
           </label>
           <label data-i18n="password">
             Password
             <input id="login-password" type="password" autocomplete="current-password" required>
           </label>
+          <label id="confirm-password-field" hidden>
+            <span id="confirm-password-label">Confirm password</span>
+            <input id="confirm-password" type="password" autocomplete="new-password">
+          </label>
+          <p id="auth-hint" hidden></p>
           <p id="login-error" role="alert" aria-live="polite"></p>
-          <button class="primary" data-i18n="signIn">Sign in</button>
+          <button class="primary" id="auth-submit" type="submit">Sign in</button>
         </form>
       </div>
     </section>
@@ -95,8 +104,12 @@
               <h2 id="course-name"></h2>
               <p data-i18n="addDocumentHint">Add a document to create an AI study set.</p>
             </div>
-            <label class="primary" for="file" data-i18n="addPdf" tabindex="0">+ Add PDF</label>
-            <input id="file" type="file" accept="application/pdf" hidden>
+            <div class="course-toolbar-actions">
+              <button type="button" id="rename-course" class="secondary-button" data-i18n="renameSubject">Rename</button>
+              <button type="button" id="delete-course" class="document-delete" data-i18n="deleteSubject">Delete subject</button>
+              <label class="primary" for="file" data-i18n="addPdf" tabindex="0">+ Add PDF</label>
+              <input id="file" type="file" accept="application/pdf" hidden>
+            </div>
           </div>
           <div id="documents" class="documents"></div>
         </section>
@@ -104,12 +117,38 @@
 
       <dialog id="course-dialog">
         <form method="dialog" id="course-form">
-          <button class="close" aria-label="Close">×</button>
+          <button type="button" class="close" id="close-course-dialog" aria-label="Close">×</button>
           <p class="eyebrow" data-i18n="newSubject">NEW SUBJECT</p>
           <h2 data-i18n="nameSubject">Name your subject</h2>
           <input id="course-input" required maxlength="120">
           <button class="primary" data-i18n="create">Create subject</button>
         </form>
+      </dialog>
+
+      <dialog id="rename-course-dialog" aria-labelledby="rename-course-title">
+        <form id="rename-course-form">
+          <button type="button" class="close" id="close-rename-course" aria-label="Close">×</button>
+          <p class="eyebrow" data-i18n="subjectSettings">SUBJECT SETTINGS</p>
+          <h2 id="rename-course-title" data-i18n="renameSubject">Rename subject</h2>
+          <label class="field-label" for="rename-course-input" data-i18n="subjectName">Subject name</label>
+          <input id="rename-course-input" required maxlength="120" autocomplete="off">
+          <div class="dialog-actions">
+            <button type="button" class="secondary-button" id="cancel-rename-course" data-i18n="cancel">Cancel</button>
+            <button type="submit" class="primary" id="save-rename-course" data-i18n="saveChanges">Save changes</button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog id="delete-course-dialog" aria-labelledby="delete-course-title">
+        <h2 id="delete-course-title" data-i18n="deleteSubjectQuestion">Delete this subject?</h2>
+        <p class="delete-description" data-i18n="deleteSubjectWarning">
+          All documents in this subject, including their flashcards and quizzes, will be permanently deleted.
+        </p>
+        <p class="delete-filename" id="delete-course-name"></p>
+        <div class="dialog-actions">
+          <button type="button" class="secondary-button" id="cancel-delete-course" data-i18n="cancel">Cancel</button>
+          <button type="button" class="danger-button" id="confirm-delete-course" data-i18n="deleteSubject">Delete subject</button>
+        </div>
       </dialog>
 
       <dialog id="delete-document-dialog" aria-labelledby="delete-document-title">
@@ -157,9 +196,35 @@
           </div>
         </div>
       </dialog>
+
+      <div id="chat-widget" class="chat-widget">
+        <section id="chat-panel" class="chat-panel" role="dialog" aria-modal="false" aria-labelledby="chat-title" hidden>
+          <div class="chat-header">
+            <span class="chat-avatar" aria-hidden="true">M</span>
+            <div class="chat-heading">
+              <strong id="chat-title">May · MayStudy</strong>
+              <span id="chat-context">Your study companion</span>
+            </div>
+            <button type="button" id="chat-close" class="chat-icon-button" aria-label="Close chat" title="Close chat">×</button>
+          </div>
+          <div id="chat-messages" class="chat-messages" role="log" aria-live="polite" aria-label="Chat messages"></div>
+          <div id="chat-suggestions" class="chat-suggestions"></div>
+          <form id="chat-form" class="chat-composer">
+            <label class="sr-only" for="chat-input">Message May</label>
+            <textarea id="chat-input" rows="1" maxlength="2000" placeholder="Ask May anything about studying..."></textarea>
+            <button type="submit" id="chat-send" aria-label="Send message" title="Send message">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 14-7-4 14-3-6-7-1Z"/><path d="m12 13 7-8"/></svg>
+            </button>
+          </form>
+          <p id="chat-error" class="chat-error" role="alert" hidden></p>
+        </section>
+        <button type="button" id="chat-launcher" class="chat-launcher" aria-label="Open May chat" aria-controls="chat-panel" aria-expanded="false" title="Chat with May">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H5l-2 2v-9.5A7.5 7.5 0 0 1 10.5 4H13a7 7 0 0 1 7 7.5Z"/><path d="m12 8 .5 1.5L14 10l-1.5.5L12 12l-.5-1.5L10 10l1.5-.5L12 8Z"/></svg>
+        </button>
+      </div>
     </div>
 
     <div id="toast" role="status" aria-live="polite"></div>
-    <script type="module" src="src/app.js?v=quiz-navigation-2"></script>
+    <script type="module" src="src/app.js?v=stream-1"></script>
   </body>
 </html>

@@ -4,14 +4,14 @@ Tài liệu này phân biệt **đã có trong source** với **đang muốn là
 
 ## V1 hiện tại
 
-1. Frontend tĩnh có màn hình đăng nhập, tạo/xem môn học, thêm/xoá tài liệu, giao diện EN/VI và sáng/tối.
+1. Frontend tĩnh có màn hình đăng ký/đăng nhập, tạo/xem/đổi tên/xoá môn học, thêm/xoá tài liệu, giao diện EN/VI và sáng/tối.
 2. API FastAPI nhận PDF tối đa 15 MB, dùng PyMuPDF đọc **text**. PDF scan chỉ có ảnh chưa xử lý được.
 3. Text theo trang được chia thành đoạn khoảng 45.000 ký tự; mỗi lượt tạo AI dùng một đoạn và các lượt tạo lại luân phiên qua các đoạn. **Chưa có map/reduce** để tổng hợp toàn bộ PDF dài trong một lượt.
 4. Mistral được thử trước (nếu có key), sau đó Gemini theo thứ tự key 1→3 khi gặp **429/rate limit**. Lỗi khác không tự chuyển provider.
 5. AI được yêu cầu trả JSON gồm summary, 10 flashcard và 20 câu quiz. Backend kiểm tra cấu trúc câu hỏi/đáp án cơ bản, loại câu lặp gần giống, xáo trộn đáp án rồi mới lưu; **chưa kiểm chứng tính đúng với PDF hoặc source_pages**.
-6. PostgreSQL lưu môn học, tên tài liệu, summary, flashcards, questions, text nguồn theo trang và lịch sử câu đã sinh. PDF gốc không được lưu. Dữ liệu cũ không có text nguồn thì phải upload PDF lại để dùng tạo lại. Xoá tài liệu xoá bản ghi và nội dung học tương ứng.
+6. PostgreSQL lưu môn học, tên tài liệu, summary, flashcards, questions, text nguồn theo trang và lịch sử câu đã sinh. PDF gốc không được lưu. Dữ liệu cũ không có text nguồn thì phải upload PDF lại để dùng tạo lại. Xoá môn học cascade xoá toàn bộ tài liệu và nội dung học bên trong; xoá tài liệu chỉ xoá bản ghi và bộ học tương ứng.
 7. Giao diện học có lật flashcard, duyệt toàn bộ quiz và nút ↻ để tạo bộ mới. Nếu AI không tạo đủ câu mới sau ba lượt, bộ cũ được giữ nguyên. Summary đã lưu nhưng chưa có màn hiển thị riêng.
-8. Backend có tài khoản admin khởi tạo từ `.env` nếu username chưa tồn tại. Login xác thực mật khẩu, nhưng trạng thái đăng nhập phía frontend chỉ lưu ở `localStorage`; các route dữ liệu **chưa kiểm tra token/session**.
+8. Backend có tài khoản admin khởi tạo từ `.env` nếu username chưa tồn tại. Người học tự đăng ký, mật khẩu được băm và lưu trong PostgreSQL. Đăng nhập cấp Bearer session lưu dạng hash trong DB, hết hạn sau 30 ngày; API môn học/tài liệu/chat kiểm tra session và quyền sở hữu môn học. Frontend lưu token trong `localStorage`, chưa có chống brute-force/rate limit đăng nhập.
 
 ## Ranh giới kiến trúc
 
@@ -33,7 +33,7 @@ Module mới nên đi theo luồng use case → port → adapter → route/UI. H
 
 | Ưu tiên | Việc cần làm | Xong khi nào? |
 | --- | --- | --- |
-| P0 — an toàn dữ liệu | Session/token thực sự ở backend; phân quyền và sở hữu môn học/tài liệu theo user; cấu hình CORS/secret/DB credential cho môi trường triển khai | Không thể xem, tạo hoặc xoá dữ liệu của user khác bằng cách gọi API trực tiếp. |
+| P0 — an toàn dữ liệu | Đã có session và phân quyền sở hữu môn học/tài liệu theo user; tiếp theo cần rate limit đăng nhập, quản lý phiên trên nhiều thiết bị, cấu hình CORS/DB credential cho môi trường triển khai | Không thể xem, tạo hoặc xoá dữ liệu của user khác bằng cách gọi API trực tiếp; cấu hình triển khai không dùng credential mẫu. |
 | P1 — tính đúng | Kiểm tra source_pages và tính đúng với PDF, phát hiện câu trùng nghĩa, hiển thị summary | Nội dung sai/trùng ý bị từ chối có thông báo rõ; bộ học hiển thị đủ nội dung đã lưu. |
 | P1 — vận hành | Migration DB (thay `create_all`), test API/UI, logging và xử lý lỗi provider | Có thể nâng schema và chạy test lặp lại mà không đụng dữ liệu thật. |
 | P2 — PDF lớn | Chia chunk, tổng hợp kết quả, queue/background job, trạng thái tiến trình, retry có giới hạn | PDF dài không bị cắt thầm; người dùng biết job đang làm gì. |

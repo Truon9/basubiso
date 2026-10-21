@@ -2,7 +2,7 @@
 
 MayStudy biến PDF môn học thành flashcard và câu hỏi ôn tập. Đây là bản local MVP: làm được việc, chưa phải “AI học hộ bạn”. Đọc tài liệu vẫn là kèo của mình; MayStudy lo phần bớt ngợp.
 
-Hiện tại bạn có thể đăng nhập, tạo môn học, thêm PDF, học flashcard, làm câu hỏi trắc nghiệm và xoá bộ học đã tạo. Dữ liệu môn học và nội dung AI sinh ra được lưu trong PostgreSQL. Giao diện có EN/VI và sáng/tối.
+Hiện tại bạn có thể đăng nhập, tạo/đổi tên/xoá môn học, thêm/xoá PDF, học flashcard, làm câu hỏi trắc nghiệm và trò chuyện với May qua nút chat góc phải. May hiện trạng thái đang gõ rồi hiển thị câu trả lời dần theo luồng từ LLM. Khi đang mở một môn học, May dùng phần tài liệu đã lưu của môn đó để hỗ trợ trả lời; ở trang tổng quan, May là trợ lý học tập chung. Hội thoại hiện chỉ giữ trong phiên trang, chưa lưu vào PostgreSQL. Dữ liệu môn học và nội dung AI sinh ra được lưu trong PostgreSQL. Giao diện có EN/VI và sáng/tối.
 
 ## Chạy từ đầu trên Windows — không cần Docker Desktop
 
@@ -129,9 +129,9 @@ cd /mnt/c/Users/Administrator/Downloads/Vk_iu_Project
 python3 -m http.server 5173 --bind 0.0.0.0 --directory frontend
 ```
 
-Mở trình duyệt Windows tại **http://localhost:5173**. API ở **http://localhost:8000**, tài liệu API ở **http://localhost:8000/docs**. Đăng nhập bằng `ADMIN_USERNAME` và `ADMIN_PASSWORD` bạn đã đặt. Frontend là file tĩnh, **không chạy từ `file://`** và không cần `npm install`/`npm run dev`.
+Mở trình duyệt Windows tại **http://localhost:5173**. API ở **http://localhost:8000**, tài liệu API ở **http://localhost:8000/docs**. Bạn có thể chọn **Tạo tài khoản**, nhập tên đăng nhập và mật khẩu (tối thiểu 8 ký tự), rồi đăng nhập bằng tài khoản vừa tạo; hoặc đăng nhập admin bằng `ADMIN_USERNAME` và `ADMIN_PASSWORD` đã đặt. Tài khoản và mật khẩu băm được lưu trong PostgreSQL. Frontend là file tĩnh, **không chạy từ `file://`** và không cần `npm install`/`npm run dev`.
 
-Luồng thử nhanh: đăng nhập → tạo môn học → vào môn học → thêm PDF có text (tối đa 15 MB) → đợi AI xử lý → học 10 flashcard và 20 câu quiz. Trong màn hình học, dùng mũi tên để chuyển câu; nút tròn **↻** gọi API tạo bộ 20 câu + 10 flashcard mới từ cùng tài liệu. Bấm **Xoá** ở tài liệu nếu muốn bỏ bộ học đó; thao tác có hộp xác nhận.
+Luồng thử nhanh: đăng nhập → tạo môn học → vào môn học → thêm PDF có text (tối đa 15 MB) → đợi AI xử lý → học 10 flashcard và 20 câu quiz. Trong màn hình học, dùng mũi tên để chuyển câu; nút tròn **↻** gọi API tạo bộ 20 câu + 10 flashcard mới từ cùng tài liệu. Trên thẻ môn học hoặc trang chi tiết có nút **Đổi tên** và **Xoá môn học**. Xoá môn học sẽ xoá vĩnh viễn mọi tài liệu, flashcard và quiz trong môn đó; giao diện yêu cầu xác nhận trước khi gọi API.
 
 ### Những lần chạy sau và cách dừng
 
@@ -172,7 +172,7 @@ backend/app/application/     # use case và interface
 backend/app/infrastructure/  # PyMuPDF, AI, PostgreSQL
 backend/app/presentation/    # FastAPI routes
 frontend/src/core/           # cấu hình/chức năng dùng chung
-frontend/src/features/       # auth UI và learning UI
+frontend/src/features/       # auth UI, learning UI và chat widget
 infra/docker-compose.yml     # postgres + api
 docs/IMPLEMENTATION_PLAN.md  # trạng thái thật và việc tiếp theo
 ```
@@ -181,6 +181,6 @@ Xem thêm [kiến trúc](ARCHITECTURE.md) và [kế hoạch triển khai](docs/I
 
 ## Giới hạn hiện tại
 
-Đây là môi trường phát triển local, **chưa nên public nguyên trạng**. Đăng nhập kiểm tra mật khẩu nhưng API môn học/tài liệu chưa có token/session và chưa tách dữ liệu theo user; PostgreSQL trong Compose còn mở port `5432` với credential mẫu. PDF gốc không được lưu; tài liệu upload từ phiên bản này lưu text theo trang để tạo lại bộ học. Tài liệu cũ chưa có text nguồn phải upload lại để dùng ↻. Backend loại câu trùng/sát chữ với lịch sử trước khi lưu, nhưng chưa thể bảo đảm phát hiện mọi câu diễn đạt khác mà hỏi cùng một ý; nếu AI không sinh đủ bộ mới sau ba lượt, API báo lỗi và giữ nguyên bộ cũ. PDF scan chưa có OCR. Chi tiết ưu tiên sửa nằm trong [implementation plan](docs/IMPLEMENTATION_PLAN.md).
+Đây là môi trường phát triển local, **chưa nên public nguyên trạng**. API môn học/tài liệu/chat hiện yêu cầu Bearer session lưu trong PostgreSQL; dữ liệu môn học được tách theo tài khoản. Session tồn tại 30 ngày, được kiểm tra lại khi tải trang và bị thu hồi khi đăng xuất. Token vẫn nằm trong `localStorage` của trình duyệt; bản local chưa có chống brute-force/rate limit cho đăng nhập và PostgreSQL trong Compose còn mở port `5432` với credential mẫu. **Đừng mở API qua Dev Tunnel/public Internet cho người lạ** khi chưa harden thêm. Môn học cũ trước tính năng tài khoản được gán cho admin khi backend khởi động nếu có admin trong DB. PDF gốc không được lưu; tài liệu upload từ phiên bản này lưu text theo trang để tạo lại bộ học. Tài liệu cũ chưa có text nguồn phải upload lại để dùng ↻. Backend loại câu trùng/sát chữ với lịch sử trước khi lưu, nhưng chưa thể bảo đảm phát hiện mọi câu diễn đạt khác mà hỏi cùng một ý; nếu AI không sinh đủ bộ mới sau ba lượt, API báo lỗi và giữ nguyên bộ cũ. PDF scan chưa có OCR. Chi tiết ưu tiên sửa nằm trong [implementation plan](docs/IMPLEMENTATION_PLAN.md).
 
 Tài liệu cài đặt tham khảo: [Microsoft WSL](https://learn.microsoft.com/en-us/windows/wsl/install), [Ubuntu 24.04 trên WSL](https://ubuntu.com/wsl/docs/stable/tutorials/develop-with-ubuntu-wsl/), [WSL systemd](https://learn.microsoft.com/en-us/windows/wsl/systemd/), [lưu source giữa Windows/WSL](https://learn.microsoft.com/en-us/windows/wsl/filesystems), [Ubuntu `docker-compose-v2`](https://packages.ubuntu.com/noble/docker-compose-v2), [Docker về quyền của nhóm `docker`](https://docs.docker.com/engine/install/linux-postinstall/).

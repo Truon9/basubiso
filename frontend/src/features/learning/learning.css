@@ -39,6 +39,80 @@
   font-size: 16px;
 }
 
+.course {
+  cursor: default;
+}
+
+.course-top,
+.course-actions,
+.course-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.course-top {
+  justify-content: space-between;
+}
+
+.course-actions button {
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.course-actions button:hover {
+  background: var(--brand-soft);
+  color: var(--brand-strong);
+}
+
+.course-actions button:last-child:hover {
+  background: color-mix(in srgb, var(--danger) 12%, var(--surface));
+  color: var(--danger);
+}
+
+.course-open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.course-open h3 {
+  margin-top: 30px;
+}
+
+.course-toolbar-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.field-label {
+  display: block;
+  margin-top: 20px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+#rename-course-dialog input {
+  margin: 8px 0 14px;
+}
+
+.course-toolbar-actions button:disabled,
+#rename-course-dialog button:disabled {
+  cursor: wait;
+  opacity: .6;
+}
+
 .card {
   position: relative;
   transform-style: preserve-3d;
@@ -213,6 +287,10 @@ dialog[open] {
 }
 
 @media (max-width: 760px) {
+  .course-toolbar-actions {
+    justify-content: flex-start;
+  }
+
   .preferences {
     width: auto;
     margin: 0;
